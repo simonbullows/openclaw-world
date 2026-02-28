@@ -1,18 +1,31 @@
 extends CharacterBody3D
 
-const SPEED = 5.0
-const JUMP_VELOCITY = 4.5
-const GRAVITY = 9.8
+const SPEED = 6.0
+const JUMP_VELOCITY = 5.0
+const GRAVITY = 15.0
+const MOUSE_SENSITIVITY = 0.003
 
 @onready var camera = $Camera3D
 
 var world_seed = 12345
-var selected_block = 1  # 1=grass, 2=stone, 3=wood
+var selected_block = 1
 
+# No clip collision shape for first person
 func _ready():
-	# Random world seed
 	world_seed = randi()
-	generate_terrain()
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _input(event):
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
+		camera.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
+		camera.rotation.x = clamp(camera.rotation.x, -PI/2, PI/2)
+	
+	if event.is_action_pressed("ui_cancel"):
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _physics_process(delta):
 	# Gravity
@@ -34,51 +47,60 @@ func _physics_process(delta):
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 		velocity.z = move_toward(velocity.z, 0, SPEED)
 
-	# Block interaction
-	if Input.is_action_just_pressed("place_block"):
-		place_block()
-	if Input.is_action_just_pressed("break_block"):
+	# Block interaction (left click)
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		break_block()
+	
+	# Block interaction (right click)
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+		place_block()
 
 	move_and_slide()
 
-func generate_terrain():
-	# Simple voxel terrain - flat with some variation
-	var terrain = get_node("/root/Main/Terrain")
-	if not terrain:
-		return
+func break_block():
+	# Cast ray from camera
+	var from = camera.global_position
+	var to = from + (-camera.global_transform.basis.z) * 10
 	
-	# Create ground
-	for x in range(-10, 10):
-		for z in range(-10, 10):
-			var height = 0
-			# Add some noise-like variation
-			var noise = (sin(x * 0.5 + world_seed) + cos(z * 0.5 + world_seed)) * 0.5
-			if noise > 0.3:
-				height = 1
-			if noise > 0.6:
-				height = 2
-			
-			for y in range(-1, height + 1):
-				var block_type = 1 if y == height else 2
-				terrain.set_block(x, y, z, block_type)
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(from, to)
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	
+	var result = space_state.intersect_ray(query)
+	
+	if result:
+		var pos = result.position
+		var block_pos = Vector3(round(pos.x), round(pos.y), round(pos.z))
+		
+		# Determine which block to break (neighbor of hit)
+		var hit_normal = result.position - result.collider.global_position
+		var break_pos = block_pos - hit_normal.snapped(Vector3.ONE)
+		
+		var terrain = get_node("/root/Main/Terrain")
+		if terrain:
+			terrain.set_block(int(break_pos.x), int(break_pos.y), int(break_pos.z), 0)
 
 func place_block():
-	# Place block in front of player
-	var forward = -global_transform.basis.z
-	var target_pos = global_position + forward * 2
-	target_pos = target_pos.snapped(Vector3(1, 1, 1))
+	# Cast ray from camera
+	var from = camera.global_position
+	var to = from + (-camera.global_transform.basis.z) * 10
 	
-	var terrain = get_node("/root/Main/Terrain")
-	if terrain:
-		terrain.set_block(int(target_pos.x), int(target_pos.y), int(target_pos.z), selected_block)
-
-func break_block():
-	# Break block in front of player
-	var forward = -global_transform.basis.z
-	var target_pos = global_position + forward * 2
-	target_pos = target_pos.snapped(Vector3(1, 1, 1))
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(from, to)
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
 	
-	var terrain = get_node("/root/Main/Terrain")
-	if terrain:
-		terrain.set_block(int(target_pos.x), int(target_pos.y), int(target_pos.z), 0)
+	var result = space_state.intersect_ray(query)
+	
+	if result:
+		var pos = result.position
+		var hit_normal = result.position - result.collider.global_position
+		
+		# Place block adjacent to hit
+		var place_pos = Vector3(round(pos.x), round(pos.y), round(pos.z))
+		place_pos += hit_normal.snapped(Vector3.ONE)
+		
+		var terrain = get_node("/root/Main/Terrain")
+		if terrain:
+			terrain.set_block(int(place_pos.x), int(place_pos.y), int(place_pos.z), selected_block)

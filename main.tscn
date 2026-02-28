@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://main_scene"]
+[gd_scene load_steps=20 format=3 uid="uid://main_scene"]
 
 [ext_resource type="Script" path="res://player.gd" id="1_player"]
 [ext_resource type="Script" path="res://terrain.gd" id="2_terrain"]
@@ -7,22 +7,91 @@
 [sub_resource type="BoxMesh" id="BoxMesh_player"]
 size = Vector3(0.8, 1.5, 0.8)
 
-[sub_resource type="BoxMesh" id="BoxMesh_claw"]
-size = Vector3(0.5, 0.5, 0.5)
+[sub_resource type="StandardMaterial3D" id="Mat_player"]
+albedo_color = Color(0.15, 0.15, 0.2)
+metallic = 0.3
+roughness = 0.5
 
-[sub_resource type="BoxMesh" id="BoxMesh_body"]
-size = Vector3(1, 1, 1)
+[sub_resource type="StandardMaterial3D" id="Mat_grass"]
+albedo_color = Color(0.25, 0.6, 0.3)
+metallic = 0.0
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_dirt"]
+albedo_color = Color(0.35, 0.25, 0.15)
+metallic = 0.0
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="Mat_stone"]
+albedo_color = Color(0.45, 0.45, 0.5)
+metallic = 0.1
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="Mat_wood"]
+albedo_color = Color(0.5, 0.35, 0.2)
+metallic = 0.0
+roughness = 0.85
+
+[sub_resource type="StandardMaterial3D" id="Mat_leaves"]
+albedo_color = Color(0.2, 0.5, 0.2)
+metallic = 0.0
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_water"]
+albedo_color = Color(0.2, 0.5, 0.8, 0.7)
+metallic = 0.1
+roughness = 0.1
+transparency = 1
+
+[sub_resource type="StandardMaterial3D" id="Mat_claw_orange"]
+albedo_color = Color(1.0, 0.5, 0.1)
+metallic = 0.6
+roughness = 0.3
+emission_enabled = true
+emission = Color(1.0, 0.5, 0.1)
+emission_energy_multiplier = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_claw_blue"]
+albedo_color = Color(0.2, 0.5, 1.0)
+metallic = 0.6
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.2, 0.5, 1.0)
+emission_energy_multiplier = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_claw_purple"]
+albedo_color = Color(0.6, 0.2, 0.8)
+metallic = 0.6
+roughness = 0.3
+emission_enabled = true
+emission = Color(0.6, 0.2, 0.8)
+emission_energy_multiplier = 0.5
 
 [sub_resource type="Environment" id="Environment_main"]
-background_mode = 1
-background_color = Color(0.4, 0.6, 0.9, 1)
+background_mode = 2
+sky = SubResource("Sky_main")
 ambient_light_source = 2
-ambient_light_color = Color(0.5, 0.5, 0.5, 1)
+ambient_light_color = Color(0.4, 0.45, 0.5, 1)
+ambient_light_energy = 0.5
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.5
+glow_bloom = 0.3
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("SkyMaterial_main")
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_main"]
+sky_top_color = Color(0.25, 0.55, 0.9, 1)
+sky_horizon_color = Color(0.7, 0.8, 0.95, 1)
+ground_bottom_color = Color(0.15, 0.12, 0.1, 1)
+ground_horizon_color = Color(0.5, 0.55, 0.45, 1)
 
 [sub_resource type="DirectionalLight3D" id="Light_sun"]
-light_color = Color(1, 0.95, 0.8, 1)
-light_energy = 1.2
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 1.5
 shadow_enabled = true
+shadow_blur = 1.0
 
 [node name="Main" type="Node3D"]
 
@@ -30,10 +99,16 @@ shadow_enabled = true
 environment = SubResource("Environment_main")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 10, 0)
-light_color = Color(1, 0.95, 0.8, 1)
-light_energy = 1.2
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 15, 10)
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 1.5
 shadow_enabled = true
+shadow_blur = 1.0
+
+[node name="DirectionalLight3D2" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, 0.354, -0.354, 0, 0.707, 0.707, 0.5, -0.612, 0.612, -10, 10, -10)
+light_color = Color(0.6, 0.7, 1.0, 1)
+light_energy = 0.3
 
 [node name="Terrain" type="Node3D" parent="."]
 script = ExtResource("2_terrain")
@@ -49,65 +124,91 @@ shape = SubResource("BoxMesh_player")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
 mesh = SubResource("BoxMesh_player")
+surface_material_override/0 = SubResource("Mat_player")
 
 [node name="Camera3D" type="Camera3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 0.866, 0.5, 0, -0.5, 0.866, 0, 3, 4)
+transform = Transform3D(1, 0, 0, 0, 0.9, 0.436, 0, -0.436, 0.9, 0, 3.5, 5)
 fov = 75.0
 
-[node name="OpenClaw1" type="CharacterBody3D" parent="."]
+[node name="OpenClaw_Pepper" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2, 5)
 script = ExtResource("3_npc")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="OpenClaw1"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="OpenClaw_Pepper"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_body")
+mesh = SubResource("BoxMesh_player")
+surface_material_override/0 = SubResource("Mat_claw_orange")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="OpenClaw1"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="OpenClaw_Pepper"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxMesh_body")
+shape = SubResource("BoxMesh_player")
 
-[node name="OpenClaw2" type="CharacterBody3D" parent="."]
+[node name="OpenClaw_Researcher" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2, -5)
 script = ExtResource("3_npc")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="OpenClaw2"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="OpenClaw_Researcher"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_body")
+mesh = SubResource("BoxMesh_player")
+surface_material_override/0 = SubResource("Mat_claw_blue")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="OpenClaw2"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="OpenClaw_Researcher"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxMesh_body")
+shape = SubResource("BoxMesh_player")
 
-[node name="OpenClaw3" type="CharacterBody3D" parent="."]
+[node name="OpenClaw_Writer" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2, -3)
 script = ExtResource("3_npc")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="OpenClaw3"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="OpenClaw_Writer"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("BoxMesh_body")
+mesh = SubResource("BoxMesh_player")
+surface_material_override/0 = SubResource("Mat_claw_purple")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="OpenClaw3"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="OpenClaw_Writer"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("BoxMesh_body")
+shape = SubResource("BoxMesh_player")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="Label" type="Label" parent="UI"]
+[node name="Panel" type="Panel" parent="UI"]
 offset_left = 20.0
 offset_top = 20.0
-offset_right = 700.0
-offset_bottom = 100.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "OPENCLAW WORLD
-WASD to Move | Space to Jump
-E to Place Block | Q to Break Block"
+offset_right = 450.0
+offset_bottom = 140.0
 
-[node name="Label2" type="Label" parent="UI"]
-offset_left = 20.0
-offset_top = 100.0
-offset_right = 500.0
-offset_bottom = 130.0
-theme_override_colors/font_color = Color(0.3, 0.8, 0.3, 1)
-theme_override_font_sizes/font_size = 16
-text = "Build & survive with your OpenClaw bots!"
+[node name="Label" type="Label" parent="UI/Panel"]
+offset_left = 15.0
+offset_top = 10.0
+offset_right = 415.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "🕸️ OPENCLAW WORLD"
+
+[node name="Label2" type="Label" parent="UI/Panel"]
+offset_left = 15.0
+offset_top = 35.0
+offset_right = 415.0
+offset_bottom = 75.0
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+text = "WASD: Move  |  SPACE: Jump  |  E: Place  |  Q: Break"
+
+[node name="Label3" type="Label" parent="UI/Panel"]
+offset_left = 15.0
+offset_top = 60.0
+offset_right = 415.0
+offset_bottom = 100.0
+theme_override_colors/font_color = Color(1, 0.8, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "🟠 Pepper (Worker)  🔵 Researcher  🟣 Writer"
+
+[node name="Label4" type="Label" parent="UI/Panel"]
+offset_left = 15.0
+offset_top = 85.0
+offset_right = 415.0
+offset_bottom = 110.0
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 12
+text = "Made by Jeeves 🤖 | Godot 4.2+"
